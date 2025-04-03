@@ -32,6 +32,10 @@ The setup instructions will be based on the Debian GNU/Linux distribution
 
     `pip3 install -r requirements.txt`
 
+- Make needed changes to config.json file
+
+    `nano config.json`
+
 - Run the application
 
     `python3 app.py`
