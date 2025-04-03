@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 from nicegui import ui
-import pyperclip
 from helpers import get_names, get_types, get_free_ip
 
 
@@ -44,7 +43,7 @@ def main():
         address = ui.input(label="Адрес:").classes("w-full")
         with ui.row():
             ui.button(
-                "Copy", on_click=lambda: pyperclip.copy(address.value)
+                "Copy", on_click=lambda: ui.clipboard.write(address.value)
             ).classes("w-32")
             ui.button(
                 "Update",
