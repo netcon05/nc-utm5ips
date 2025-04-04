@@ -38,10 +38,10 @@ def get_config(filename: str = "config.json") -> Dict:
     try:
         with open(full_name) as file:
             config = json.load(file)
-        return config
     except Exception as err:
         logging.error("Error in config file or file does not exist.")
         logging.error(err)
+    return config
 
 
 def connect() -> MySQLConnection:
@@ -76,20 +76,21 @@ def get_ips() -> List:
     """
     ips: List[str] = []
     conn = connect()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(QUERY)
-        data = cursor.fetchall()
-        if len(data) > 0:
-            for ip in data:
-                ips.append(ip[0])
-            conn.close()
-            return ips
-        else:
-            logging.error("Could not find any address in the database.")
-    except Exception as err:
-        logging.error("Unable to fetch addresses from database.")
-        logging.error(err)
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(QUERY)
+            data = cursor.fetchall()
+            if len(data) > 0:
+                for ip in data:
+                    ips.append(ip[0])
+                conn.close()
+                return ips
+            else:
+                logging.error("Could not find any address in the database.")
+        except Exception as err:
+            logging.error("Unable to fetch addresses from database.")
+            logging.error(err)
 
 
 def get_names() -> List:
@@ -99,10 +100,11 @@ def get_names() -> List:
     :returns: List of names
     :rtype: List[str]
     """
-    servers: List[Dict] = get_config()["servers"]
     names: List = []
-    for server in servers:
-        names.append(server["name"])
+    servers: List[Dict] = get_config()["servers"]
+    if servers:
+        for server in servers:
+            names.append(server["name"])
     return names
 
 
@@ -116,13 +118,16 @@ def get_types(name: str) -> List:
     :returns: List of types
     :rtype: List[str]
     """
-    servers: List[Dict] = get_config()["servers"]
     types: List = []
-    for server in servers:
-        if server["name"] == name:
-            for subnet in server["nets"]:
-                types.append(subnet["type"])
-            break
+    servers: List[Dict] = get_config()["servers"]
+    if servers:
+        for server in servers:
+            if server["name"] == name:
+                subnets = server["nets"]
+                if subnets:
+                    for subnet in subnets:
+                        types.append(subnet["type"])
+                break
     return list(set(types))
 
 
@@ -141,12 +146,13 @@ def get_subnets(name: str, type: str) -> List:
     """
     subnets: List[str] = []
     servers: List[Dict] = get_config()["servers"]
-    for server in servers:
-        if server["name"] == name:
-            nets: List[Dict] = server["nets"]
-            for net in nets:
-                if net["type"] == type:
-                    subnets = net["subnets"]
+    if servers:
+        for server in servers:
+            if server["name"] == name:
+                nets: List[Dict] = server["nets"]
+                for net in nets:
+                    if net["type"] == type:
+                        subnets = net["subnets"]
     return subnets
 
 
@@ -163,12 +169,17 @@ def get_free_ip(name: str, type: str) -> str:
     :returns: Ip address
     :rtype: str
     """
+    free_ip: str = ''
     ips: List[str] = get_ips()
     exceptions: List[str] = get_config()["exceptions"]
     subnets = get_subnets(name, type)
-    for subnet in subnets:
-        hosts = ip_network(subnet).hosts()
-        for ip in hosts:
-            ip = str(ip)
-            if ip not in ips and ip not in exceptions:
-                return ip
+    if ips and subnets:
+        for subnet in subnets:
+            hosts = ip_network(subnet).hosts()
+            if hosts:
+                for ip in hosts:
+                    ip = str(ip)
+                    if ip not in ips and ip not in exceptions:
+                        free_ip = ip
+                        break
+    return free_ip

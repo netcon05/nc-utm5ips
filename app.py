@@ -26,18 +26,22 @@ def main():
             get_names(),
             label="Сервер:",
             on_change=lambda: (
-                type.set_options(get_types(server.value)),
-                type.set_value(
-                    type.options[0] if len(type.options) > 0 else None
+                type.set_options(
+                    get_types(server.value) if server.value else []
                 ),
-                address.set_value(get_free_ip(server.value, type.value)),
+                type.set_value(
+                    type.options[0] if len(type.options) > 0 else ""
+                ),
+                address.set_value(
+                    get_free_ip(server.value, type.value) if len(type.options) > 0 else ""
+                ),
             ),
         ).classes("w-full")
         type = ui.select(
             [],
             label="Тип адреса:",
             on_change=lambda: address.set_value(
-                get_free_ip(server.value, type.value)
+                get_free_ip(server.value, type.value) if len(type.options) > 0 else ""
             ),
         ).classes("w-full")
         address = ui.input(label="Адрес:").classes("w-full")
@@ -48,7 +52,7 @@ def main():
             ui.button(
                 "Update",
                 on_click=lambda: address.set_value(
-                    get_free_ip(server.value, type.value)
+                    get_free_ip(server.value, type.value) if len(type.options) > 0 else ""
                 ),
             ).classes("w-32")
         if len(server.options) > 0:
